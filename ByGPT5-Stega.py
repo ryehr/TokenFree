@@ -8,7 +8,7 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.pipelines.text_generation import TextGenerationPipeline
 from transformers.models.t5.configuration_t5 import T5Config
 import argparse
-from uniformers.models.bygpt5 import ByGPT5Config, ByGPT5LMHeadModel, ByGPT5Tokenizer
+from bygpt5 import ByGPT5Config, ByGPT5LMHeadModel, ByGPT5Tokenizer
 from transformers import GPT2Tokenizer, GPT2Model
 import os
 import torch
@@ -75,7 +75,7 @@ class Trie:
         return True
 
 def construct_Trie():
-    # 获取所有的词汇表（所有词汇的同义词集合）
+
     nlp = spacy.load("en_core_web_sm")
     Vocab = set()
 
@@ -237,8 +237,8 @@ def generate(input_ids, secret_decimal):
         if secret_decimal-current_min < 1.0:
             break
     Avg_entropy /= num
-    print('-----------------------------------------------------------------------------------------------------------------------------------------------------------------')
-    print(Entropy_list)
+    # print('-----------------------------------------------------------------------------------------------------------------------------------------------------------------')
+    # print(Entropy_list)
     # print('Average entropy = ', format(Avg_entropy, '.4f'))
     # print('Bits per character = ', format(args.secret_length/num, '.4f'))
     # print('OOV number = ', format(OOV_num))
@@ -248,11 +248,11 @@ if __name__ == '__main__':
     parser=argparse.ArgumentParser()
     # parser.add_argument('--top_k', default=32, type=int, required=False)
     # parser.add_argument('--min_p', default=0.01, type=float, required=False)
-    parser.add_argument('--max_temperature', default=1.00, type=float, required=False)
-    parser.add_argument('--min_temperature', default=1.00, type=float, required=False)
+    parser.add_argument('--max_temperature', default=2.00, type=float, required=False)
+    parser.add_argument('--min_temperature', default=2.00, type=float, required=False)
     parser.add_argument('--secret_length', default=128, type=int, required=False)
-    parser.add_argument('--sigma_multiple', default=1.0, type=float, required=False)# 熵的上限阈值：平均熵 + n倍标准差
-    parser.add_argument('--OOV_multiple', default=1.0, type=float, required=False) # 降低OOV候选字符的概率（*n倍）
+    parser.add_argument('--sigma_multiple', default=0.0, type=float, required=False)
+    parser.add_argument('--OOV_multiple', default=1.0, type=float, required=False)
     # parser.add_argument('--seed', default=3223, type=int, required=False)
     parser.add_argument('--generation_num', default=1, type=int, required=False)
     args = parser.parse_args()
@@ -268,37 +268,4 @@ if __name__ == '__main__':
 
         output_ids, OOV_rate = generate(input_ids, secret_decimal)
         stega_text = tokenizer.decode(output_ids)
-        word_num = 1
-        for c in stega_text:
-            if c ==' ':
-                word_num += 1
-        print('Word number = {}'.format(word_num))
-        BPW = args.secret_length/word_num
-        ER = 100 * args.secret_length/(8*len(stega_text))
-        print('Bits per word =', format(BPW, '.4f'))
-        print('Embedding rate =',format(ER,'.2f'),'%')
-
-        csv_file_path = 'G:\Paper_TokenFree\data\TokenFree_temperature={}_alpha={}_beta={}.csv'.format(args.max_temperature, args.sigma_multiple, args.OOV_multiple)
-        PPL_results = perplexity.compute(predictions = [stega_text], model_id='gpt2')
-        PPL = PPL_results['mean_perplexity']
-        print(PPL)
-        data = [[stega_text], ER, PPL, OOV_rate]
-        print(data)
-        file_exists = os.path.isfile(csv_file_path)
-
-        # 写入CSV文件
-        with open(csv_file_path, 'a', newline='',encoding='utf-8') as csv_file:
-            csv_writer = csv.writer(csv_file)
-
-            # 如果文件不存在，写入表头信息
-            if not file_exists:
-                csv_writer.writerow(['Stegotext', 'ER', 'PPL', 'OOV_rate'])
-
-            # 追加数据
-            csv_writer.writerow(data)
-
-# output_ids = model.generate(input_ids, max_new_tokens = 10)
-
-# print(input_ids)
-# output_sentence = tokenizer.decode(input_ids[0])
-# print(output_sentence)
+        print(stega_text)
